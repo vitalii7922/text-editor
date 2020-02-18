@@ -10,12 +10,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TextEditor extends JFrame {
+    private List<Integer> positions = new ArrayList<>();
+    private String foundText;
+
     public TextEditor() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(700, 300, 600, 400);
@@ -50,13 +53,13 @@ public class TextEditor extends JFrame {
         previousMatch.setName("MenuPreviousMatch");
         JMenuItem nextMatch = new JMenuItem("Next Match");
         nextMatch.setName("MenuNextMatch");
-        JMenuItem regExp = new JMenuItem("Use regular expressions");
-        regExp.setName("MenuUseRegExp");
+        JMenuItem menuRegEx = new JMenuItem("Use regular expressions");
+        menuRegEx.setName("MenuUseRegExp");
 
         searchMenu.add(startSearch);
         searchMenu.add(previousMatch);
         searchMenu.add(nextMatch);
-        searchMenu.add(regExp);
+        searchMenu.add(menuRegEx);
 
         JPanel contentPane = new JPanel();
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -142,9 +145,15 @@ public class TextEditor extends JFrame {
 
 
 
+
         JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
         jfc.setName("FileChooser");
         jfc.setDialogTitle("Choose file");
+
+        menuRegEx.addActionListener(actionEvent -> {
+            regEx.doClick();
+        });
+
 
         btnOpen.addActionListener(actionEvent -> {
             try{
@@ -161,21 +170,12 @@ public class TextEditor extends JFrame {
 
 
         openMenuItem.addActionListener(actionEvent -> {
-            try{
-                int returnValue = jfc.showOpenDialog(null);
-                if (returnValue == JFileChooser.APPROVE_OPTION) {
-                    File selectedFile = jfc.getSelectedFile();
-                    textArea.setText(Files.readString(Paths.get(selectedFile.getAbsolutePath())));
-                }
-            } catch (IOException e) {
-                textArea.setText("");
-                e.printStackTrace();
-            }
+           btnOpen.doClick();
         });
 
 
         btnSave.addActionListener(actionEvent -> {
-            File selectedFile = jfc.getSelectedFile();
+            File selectedFile = null;
             int returnValue = jfc.showSaveDialog(null);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 selectedFile = jfc.getSelectedFile();
@@ -188,22 +188,8 @@ public class TextEditor extends JFrame {
         });
 
         saveMenuItem.addActionListener(actionEvent -> {
-            File selectedFile = jfc.getSelectedFile();
-            int returnValue = jfc.showSaveDialog(null);
-            if (returnValue == JFileChooser.APPROVE_OPTION) {
-                selectedFile = jfc.getSelectedFile();
-            }
-            try(FileWriter fileWriter = new FileWriter(selectedFile.getAbsolutePath())) {
-                fileWriter.write(textArea.getText());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+           btnSave.doClick();
         });
-
-
-
-        LinkedList<Integer> indexes = new LinkedList<>();
-        LinkedList<String> text = new LinkedList<>();
 
         btnSearch.addActionListener(actionEvent -> {
             Pattern pattern = Pattern.compile(searchField.getText(), Pattern.CASE_INSENSITIVE);
@@ -211,15 +197,14 @@ public class TextEditor extends JFrame {
             SwingWorker<Integer, Object> worker = new SwingWorker<>() {
                 @Override
                 protected Integer doInBackground(){
+                    positions.clear();
+                    foundText = searchField.getText();
+                    while (matcher.find()){
+                        positions.add(matcher.start());
+                    }
                     int index = 0;
-                    if (matcher.find()) {
-                        index = matcher.start();
-                        String foundText = matcher.group();
-                        if (!text.contains(foundText)){
-                            text.clear();
-                        }
-                        indexes.add(index);
-                        text.add(foundText);
+                    if (!positions.isEmpty()) {
+                        index = positions.get(0);
                         textArea.setCaretPosition(index + foundText.length());
                         textArea.select(index, index + foundText.length());
                         textArea.grabFocus();
@@ -235,180 +220,39 @@ public class TextEditor extends JFrame {
         });
 
         startSearch.addActionListener(actionEvent -> {
-            Pattern pattern = Pattern.compile(searchField.getText(), Pattern.CASE_INSENSITIVE);
-            Matcher matcher = pattern.matcher(textArea.getText());
-            SwingWorker<Integer, Object> worker = new SwingWorker<>() {
-                @Override
-                protected Integer doInBackground(){
-                    int index = 0;
-                    if (matcher.find()) {
-                        index = matcher.start();
-                        String foundText = matcher.group();
-                        if (!text.contains(foundText)){
-                            text.clear();
-                        }
-                        indexes.add(index);
-                        text.add(foundText);
-                        textArea.setCaretPosition(index + foundText.length());
-                        textArea.select(index, index + foundText.length());
-                        textArea.grabFocus();
-                    }
-                    return index;
-                }
-
-                @Override
-                protected void done() {
-                }
-            };
-            worker.execute();
+           btnSearch.doClick();
         });
 
-
-
         btnNext.addActionListener(actionEvent -> {
-            Pattern pattern = Pattern.compile(searchField.getText(), Pattern.CASE_INSENSITIVE);
-            Matcher matcher = pattern.matcher(textArea.getText());
-            SwingWorker<Integer, Object> worker = new SwingWorker<>() {
-                @Override
-                protected Integer doInBackground() throws Exception {
-                    int index = 0;
-                    String foundText = "";
-                    if (matcher.find(textArea.getCaretPosition()) && !indexes.isEmpty()) {
-                        index = matcher.start();
-                        foundText = matcher.group();
-                      /*  if (!text.contains(foundText)){
-                            indexes.clear();
-                            return index;
-                        }
-                        if (indexes.getLast() != index) {
-                            indexes.add(index);
-                        }*/
-                        textArea.setCaretPosition(index + foundText.length());
-                        textArea.select(index, index + foundText.length());
-                        textArea.grabFocus();
-                    }else {
-                        index = indexes.getLast();
-                        foundText = text.getLast();
-                        textArea.setCaretPosition(index + foundText.length());
-                        textArea.select(index, index + foundText.length());
-                        textArea.grabFocus();
-                    }
-                    return index;
-                }
+            int index = positions.indexOf(textArea.getCaretPosition() - foundText.length()) + 1;
+            if (index > positions.size() - 1) {
+                index = 0;
+            }
+            textArea.setCaretPosition(positions.get(index) + foundText.length());
+            textArea.select(positions.get(index), positions.get(index) + foundText.length());
+            textArea.grabFocus();
 
-                @Override
-                protected void done() {
-                }
-            };
-            worker.execute();
         });
 
         nextMatch.addActionListener(actionEvent -> {
-            Pattern pattern = Pattern.compile(searchField.getText(), Pattern.CASE_INSENSITIVE);
-            Matcher matcher = pattern.matcher(textArea.getText());
-            SwingWorker<Integer, Object> worker = new SwingWorker<>() {
-                @Override
-                protected Integer doInBackground() throws Exception {
-                    int index = 0;
-                    String foundText = "";
-                    if (matcher.find(textArea.getCaretPosition()) && !indexes.isEmpty()) {
-                        index = matcher.start();
-                        foundText = matcher.group();
-                       /* if (!text.contains(foundText)){
-                            indexes.clear();
-                            return index;
-                        }
-                        if (indexes.getLast() != index) {
-                            indexes.add(index);
-                        }*/
-                        textArea.setCaretPosition(index + foundText.length());
-                        textArea.select(index, index + foundText.length());
-                        textArea.grabFocus();
-                    }else {
-                        index = indexes.getLast();
-                        foundText = text.getLast();
-                        textArea.setCaretPosition(index + foundText.length());
-                        textArea.select(index, index + foundText.length());
-                        textArea.grabFocus();
-                    }
-                    return index;
-                }
-
-                @Override
-                protected void done() {
-                }
-            };
-            worker.execute();
+            btnNext.doClick();
         });
 
         btnPrevious.addActionListener(actionEvent -> {
-            SwingWorker<Integer, Object> worker = new SwingWorker<>() {
-                Pattern pattern = Pattern.compile(searchField.getText(), Pattern.CASE_INSENSITIVE);
-                Matcher matcher = pattern.matcher(textArea.getText());
-                @Override
-                protected Integer doInBackground() throws Exception {
-                    int index = 0;
-                    String foundText;
-                    if (indexes.size() > 1) {
-                        indexes.removeLast();
-                    }
-                    if (matcher.find(indexes.getLast())) {
-                        index = matcher.start();
-                        foundText = matcher.group();
-
-                       /* if (!text.contains(foundText)){
-                            indexes.clear();
-                            return index;
-                        }*/
-
-                        textArea.setCaretPosition(index + foundText.length());
-                        textArea.select(index, index + foundText.length());
-                        textArea.grabFocus();
-                    }
-                    return index;
-                }
-
-                @Override
-                protected void done() {
-                }
-            };
-            worker.execute();
+            int index = positions.indexOf(textArea.getCaretPosition() - foundText.length()) - 1;
+            if (index < 0) {
+                index = positions.size() - 1;
+            }
+            textArea.setCaretPosition(positions.get(index) + foundText.length());
+            textArea.select(positions.get(index), positions.get(index) + foundText.length());
+            textArea.grabFocus();
         });
 
 
         previousMatch.addActionListener(actionEvent -> {
-            SwingWorker<Integer, Object> worker = new SwingWorker<>() {
-                Pattern pattern = Pattern.compile(searchField.getText(), Pattern.CASE_INSENSITIVE);
-                Matcher matcher = pattern.matcher(textArea.getText());
-                @Override
-                protected Integer doInBackground() throws Exception {
-                    int index = 0;
-                    String foundText;
-                    if (indexes.size() > 1) {
-                        indexes.removeLast();
-                    }
-                    if (matcher.find(indexes.getLast())) {
-                        index = matcher.start();
-                        foundText = matcher.group();
-
-                        if (!text.contains(foundText)){
-                            indexes.clear();
-                            return index;
-                        }
-
-                        textArea.setCaretPosition(index + foundText.length());
-                        textArea.select(index, index + foundText.length());
-                        textArea.grabFocus();
-                    }
-                    return index;
-                }
-
-                @Override
-                protected void done() {
-                }
-            };
-            worker.execute();
+            btnPrevious.doClick();
         });
+
 
         exitMenuItem.addActionListener(actionEvent -> {
             dispose();
