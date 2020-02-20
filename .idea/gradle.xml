@@ -10,7 +10,14 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/Problems/Convert a date" />
             <option value="$PROJECT_DIR$/Text Editor/task" />
+            <option value="$PROJECT_DIR$/text-editor/Problems/Groundhogs at a party" />
+            <option value="$PROJECT_DIR$/text-editor/Problems/Iterations" />
+            <option value="$PROJECT_DIR$/text-editor/Problems/Numbers filter" />
+            <option value="$PROJECT_DIR$/text-editor/Problems/The Range class" />
+            <option value="$PROJECT_DIR$/text-editor/Problems/The angle between vectors" />
+            <option value="$PROJECT_DIR$/text-editor/Text Editor/task" />
             <option value="$PROJECT_DIR$/util" />
           </set>
         </option>

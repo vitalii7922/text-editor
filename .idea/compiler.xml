@@ -2,6 +2,20 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel>
+      <module name="Problems-Convert_a_date_main" target="11" />
+      <module name="Problems-Convert_a_date_test" target="11" />
+      <module name="text-editor-Problems-Groundhogs_at_a_party_main" target="11" />
+      <module name="text-editor-Problems-Groundhogs_at_a_party_test" target="11" />
+      <module name="text-editor-Problems-Iterations_main" target="11" />
+      <module name="text-editor-Problems-Iterations_test" target="11" />
+      <module name="text-editor-Problems-Numbers_filter_main" target="11" />
+      <module name="text-editor-Problems-Numbers_filter_test" target="11" />
+      <module name="text-editor-Problems-The_angle_between_vectors_main" target="11" />
+      <module name="text-editor-Problems-The_angle_between_vectors_test" target="11" />
+      <module name="text-editor-Problems-The_Range_class_main" target="11" />
+      <module name="text-editor-Problems-The_Range_class_test" target="11" />
+      <module name="text-editor-Text_Editor-task_main" target="11" />
+      <module name="text-editor-Text_Editor-task_test" target="11" />
       <module name="Text_Editor-task_main" target="11" />
       <module name="Text_Editor-task_test" target="11" />
       <module name="util_main" target="11" />
