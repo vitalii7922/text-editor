@@ -43,7 +43,7 @@ public class TextEditor extends JFrame {
     private JTextArea textArea;
     private JScrollPane scrollableTextArea;
     private List<Integer> positions;
-    private String searchText;
+    private String searchWord;
 
     public TextEditor() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -127,7 +127,7 @@ public class TextEditor extends JFrame {
         jfc.setDialogTitle("Choose file");
 
 
-        //initializing textA area and  scroll pane and wrap text area by scroll pane
+        //initializing text area and  scroll pane and wrap text area by scroll pane
         textArea = new JTextArea();
         textArea.setName("TextArea");
         scrollableTextArea = new JScrollPane(textArea);
@@ -253,41 +253,42 @@ public class TextEditor extends JFrame {
             @Override
             protected Integer doInBackground() {
                 positions.clear();
-                int index = 0;
-                searchText = "";
+                int position = 0; //caret position at the beginning of the word
+                searchWord = "";
                 String text;
+                //search word like a substring
                 if (!regEx.isSelected()) {
-                    searchText = searchField.getText();
-                    text = textArea.getText();
+                    searchWord = searchField.getText(); // take a word from search field
+                    text = textArea.getText(); // take text from text area
                     do {
-                        index = text.indexOf(searchText, index);
-                        if (index >= 0){
-                            positions.add(index);
+                        position = text.indexOf(searchWord, position); //get position
+                        if (position >= 0){ // add position while text has matched words
+                            positions.add(position);
                         }
-                        index++;
-                    }while (index > 0);
-                }else {
+                        position++;
+                    }while (position > 0);
+                }else { //search with regular expression
                     Pattern pattern = Pattern.compile(searchField.getText(), Pattern.CASE_INSENSITIVE);
                     Matcher matcher = pattern.matcher(textArea.getText());
                     while (matcher.find()) {
                         if (positions.isEmpty()) {
-                            searchText = matcher.group();
+                            searchWord = matcher.group();
                         }
                         positions.add(matcher.start());
                     }
                 }
                 if (!positions.isEmpty()) {
-                    index = positions.get(0);
+                    position = positions.get(0); //start movement of caret from first suitable position
                 }
-                return index;
+                return position;
             }
             @Override
             protected void done() {
-                int index;
+                int position;
                 try {
-                    index = get();
-                    textArea.setCaretPosition(index + searchText.length());
-                    textArea.select(index, index + searchText.length());
+                    position = get(); //get index from doInBackGround
+                    textArea.setCaretPosition(position + searchWord.length());
+                    textArea.select(position, position + searchWord.length());
                     textArea.grabFocus();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -297,24 +298,23 @@ public class TextEditor extends JFrame {
         worker.execute();
     }
 
-
     private void nextMatch(){
-        int index = positions.indexOf(textArea.getCaretPosition() - searchText.length()) + 1;
-        if (index > positions.size() - 1) {
+        int index = positions.indexOf(textArea.getCaretPosition() - searchWord.length()) + 1; //move caret position at the end of a file cyclically
+        if (index > positions.size() - 1) { //if caret achieves the end of a file, start movement from the beginning
             index = 0;
         }
-        textArea.setCaretPosition(positions.get(index) + searchText.length());
-        textArea.select(positions.get(index), positions.get(index) + searchText.length());
+        textArea.setCaretPosition(positions.get(index) + searchWord.length());
+        textArea.select(positions.get(index), positions.get(index) + searchWord.length());
         textArea.grabFocus();
     }
 
     private void previousMatch(){
-        int index = positions.indexOf(textArea.getCaretPosition() - searchText.length()) - 1;
-        if (index < 0) {
+        int index = positions.indexOf(textArea.getCaretPosition() - searchWord.length()) - 1; //move caret position at the beginning of a file cyclically
+        if (index < 0) { //if caret achieves the beginning of a file, start movement from the end
             index = positions.size() - 1;
         }
-        textArea.setCaretPosition(positions.get(index) + searchText.length());
-        textArea.select(positions.get(index), positions.get(index) + searchText.length());
+        textArea.setCaretPosition(positions.get(index) + searchWord.length());
+        textArea.select(positions.get(index), positions.get(index) + searchWord.length());
         textArea.grabFocus();
     }
 
@@ -323,14 +323,13 @@ public class TextEditor extends JFrame {
             int returnValue = jfc.showOpenDialog(null);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = jfc.getSelectedFile();
-                textArea.setText(Files.readString(Paths.get(selectedFile.getAbsolutePath())));
+                textArea.setText(Files.readString(Paths.get(selectedFile.getAbsolutePath()))); // set text from a file to text area
             }
         } catch (IOException e) {
-            textArea.setText("");
+            textArea.setText(""); //if an exception happens leave a file clear
             e.printStackTrace();
         }
     }
-
 
     private void saveFile(){
         File selectedFile = null;
@@ -339,7 +338,7 @@ public class TextEditor extends JFrame {
             selectedFile = jfc.getSelectedFile();
         }
         try(FileWriter fileWriter = new FileWriter(selectedFile.getAbsolutePath())) {
-            fileWriter.write(textArea.getText());
+            fileWriter.write(textArea.getText()); //write text to a selected file
         } catch (IOException e) {
             e.printStackTrace();
         }
